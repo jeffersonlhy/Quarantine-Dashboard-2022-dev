@@ -25,17 +25,24 @@ def dashboard_view(request):
 
     for d in range(8):
         td = today - timedelta(days=d)
-        print(td)
+        print(f"INFO: Trying to fetch data at {td}")
         qs_d = f"{td.strftime('%d')}%2F{td.strftime('%m')}%2F{td.strftime('%Y')}"
-        print(qs_d)
         try:
-            occupancy_data = requests.get(f"https://api.data.gov.hk/v2/filter?q=%7B%22resource%22%3A%22http%3A%2F%2Fwww.chp.gov.hk%2Ffiles%2Fmisc%2Foccupancy_of_quarantine_centres_eng.csv%22%2C%22section%22%3A1%2C%22format%22%3A%22json%22%2C%22sorts%22%3A%5B%5B8%2C%22desc%22%5D%5D%2C%22filters%22%3A%5B%5B1%2C%22eq%22%2C%5B%22{qs_d}%22%5D%5D%5D%7D").json()
-            quarantine_data = requests.get(f"https://api.data.gov.hk/v2/filter?q=%7B%22resource%22%3A%22http%3A%2F%2Fwww.chp.gov.hk%2Ffiles%2Fmisc%2Fno_of_confines_by_types_in_quarantine_centres_eng.csv%22%2C%22section%22%3A1%2C%22format%22%3A%22json%22%2C%22filters%22%3A%5B%5B1%2C%22eq%22%2C%5B%22{qs_d}%22%5D%5D%5D%7D").json()
+            occupancy_res = requests.get(f"https://api.data.gov.hk/v2/filter?q=%7B%22resource%22%3A%22http%3A%2F%2Fwww.chp.gov.hk%2Ffiles%2Fmisc%2Foccupancy_of_quarantine_centres_eng.csv%22%2C%22section%22%3A1%2C%22format%22%3A%22json%22%2C%22sorts%22%3A%5B%5B8%2C%22desc%22%5D%5D%2C%22filters%22%3A%5B%5B1%2C%22eq%22%2C%5B%22{qs_d}%22%5D%5D%5D%7D")
+            quarantine_res = requests.get(f"https://api.data.gov.hk/v2/filter?q=%7B%22resource%22%3A%22http%3A%2F%2Fwww.chp.gov.hk%2Ffiles%2Fmisc%2Fno_of_confines_by_types_in_quarantine_centres_eng.csv%22%2C%22section%22%3A1%2C%22format%22%3A%22json%22%2C%22filters%22%3A%5B%5B1%2C%22eq%22%2C%5B%22{qs_d}%22%5D%5D%5D%7D")
             print(f"INFO: Successfully Connected to APIs at date {td}")
             context['connected'] = True
-            # print(len(occupancy_data), len(quarantine_data))
+            # print("INFO:", len(occupancy_data), len(quarantine_data))
+            # print("INFO:", occupancy_res.status_code, quarantine_res.status_code)
+            if occupancy_res.status_code != 200 or quarantine_res.status_code != 200:
+                print(f"Failed to reach endpoints. Got status code {occupancy_res.status_code} and {quarantine_res.status_code}")
+                context['connected'] = False
+                context['has_data'] = False
+                break
+            occupancy_data = occupancy_res.json()
+            quarantine_data = quarantine_res.json()
         except Exception as ex:
-            print(f"Failed to reach endpoints at {td}. Details: {ex}")
+            print(f"Failed to get data at endpoints at {td}. Details: {ex}")
             context['connected'] = False
             context['has_data'] = False
             break
@@ -71,13 +78,13 @@ def dashboard_view(request):
             break
         else:
             print(f"INFO: no data at date {td}")
-            print(occupancy_data, quarantine_data)
+            print(f"INFO: {occupancy_data}, {quarantine_data}")
             continue
 
     else:
         context['connected'] = True
         context['has_data'] = False
-        print(f"Connected but no data within the past 7 days.")
+        print(f"INFO: Connected but no data within the past 7 days.")
         
 
 
