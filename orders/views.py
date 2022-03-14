@@ -18,13 +18,13 @@ def dashboard_view(request):
         },
         "centres": []
     }
-    td = datetime.today()
+    today = datetime.today()
     qs_d = ""
     occupancy_data = []
     quarantine_data = []
 
     for d in range(8):
-        td = td - timedelta(days=d)
+        td = today - timedelta(days=d)
         print(td)
         qs_d = f"{td.strftime('%d')}%2F{td.strftime('%m')}%2F{td.strftime('%Y')}"
         print(qs_d)
